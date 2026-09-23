@@ -11,8 +11,8 @@ type Config struct {
 	DBName     string
 }
 
-func Load() *Config {
-	config := &Config{
+func Load() Config {
+	config := Config{
 		HTTPPort:   os.Getenv("APP_PORT"),
 		DBHost:     os.Getenv("POSTGRES_HOST"),
 		DBPort:     os.Getenv("POSTGRES_PORT"),
