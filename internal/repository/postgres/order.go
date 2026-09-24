@@ -37,7 +37,6 @@ func (r *OrderRepository) GetByID(ctx context.Context, id int) (*model.Order, er
 
 }
 
-// f
 func (r *OrderRepository) Create(ctx context.Context, order model.Order) (int, error) {
 	const query = `
         INSERT INTO orders (status)

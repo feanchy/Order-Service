@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/feanchy/Order-Service/internal/config"
+	"github.com/feanchy/Order-Service/internal/handler"
 	"github.com/feanchy/Order-Service/internal/repository/postgres"
+	"github.com/feanchy/Order-Service/internal/service"
 )
 
 func main() {
@@ -24,12 +26,17 @@ func main() {
 
 	defer pool.Close()
 
-	// repo := repository.New(pool)
-	// service := service.New(repo)
-	// handler := handler.New(service)
+	repo := postgres.NewOrderRepository(pool)
+	OrderService := service.NewOrderService(repo)
+	OrderHandler := handler.NewOrderHandler(OrderService)
+
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /orders/{id}", OrderHandler.GetByID)
 
 	server := http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.HTTPPort),
+		Handler:      mux,
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
 		IdleTimeout:  1 * time.Second,
