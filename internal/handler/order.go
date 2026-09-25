@@ -13,6 +13,7 @@ import (
 
 type OrderService interface {
 	GetByID(ctx context.Context, id int) (*model.Order, error)
+	CreateOrder(ctx context.Context) (*model.Order, error)
 }
 
 type OrderHandler struct {
@@ -54,6 +55,11 @@ func (h *OrderHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
+
+}
+
+func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
+	json.NewDecoder(r.Body).Decode(r.Body)
 
 }
 

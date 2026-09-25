@@ -43,21 +43,21 @@ func (r *OrderRepository) GetByID(ctx context.Context, id int) (*model.Order, er
 
 }
 
-func (r *OrderRepository) Create(ctx context.Context, order model.Order) (int, error) {
+func (r *OrderRepository) CreateOrder(ctx context.Context) (*model.Order, error) {
 	const query = `
         INSERT INTO orders (status)
         VALUES ($1)
-        RETURNING id
+        RETURNING id, status
     `
 
-	var id int
+	var order model.Order
 
-	err := r.db.QueryRow(ctx, query, order.Status).Scan(&id)
+	err := r.db.QueryRow(ctx, query, "created").Scan(&order.ID, &order.Status)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return id, nil
+	return &order, nil
 }
 
 func (r *OrderRepository) UpdateStatus(ctx context.Context, order model.Order) error {
