@@ -31,8 +31,7 @@ func (h *OrderHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
-
-		http.Error(w, "invalid order id", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "invalid order id")
 		return
 	}
 
@@ -52,14 +51,27 @@ func (h *OrderHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(order); err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		http.Error(w, model.ErrInternalServer.Error(), http.StatusInternalServerError)
 		return
 	}
 
 }
 
 func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
-	json.NewDecoder(r.Body).Decode(r.Body)
+
+	order, err := h.service.CreateOrder(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, model.ErrInternalServer.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	if err := json.NewEncoder(w).Encode(order); err != nil {
+		http.Error(w, model.ErrInternalServer.Error(), http.StatusInternalServerError)
+		return
+	}
 
 }
 

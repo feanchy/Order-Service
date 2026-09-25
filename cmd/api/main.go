@@ -28,16 +28,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer pool.Close()
 
 	repo := postgres.NewOrderRepository(pool)
-	OrderService := service.NewOrderService(repo)
-	OrderHandler := handler.NewOrderHandler(OrderService)
+	orderService := service.NewOrderService(repo)
+	orderHandler := handler.NewOrderHandler(orderService)
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /orders/{id}", OrderHandler.GetByID)
+	mux.HandleFunc("GET /orders/{id}", orderHandler.GetByID)
+	mux.HandleFunc("POST /orders", orderHandler.CreateOrder)
 
 	server := http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.HTTPPort),
