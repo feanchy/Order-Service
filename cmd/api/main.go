@@ -11,9 +11,14 @@ import (
 	"github.com/feanchy/Order-Service/internal/handler"
 	"github.com/feanchy/Order-Service/internal/repository/postgres"
 	"github.com/feanchy/Order-Service/internal/service"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("failed to load .env")
+	}
+
 	cfg := config.Load()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

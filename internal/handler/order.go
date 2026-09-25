@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -28,13 +29,15 @@ func (h *OrderHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
+
 		http.Error(w, "invalid order id", http.StatusBadRequest)
 		return
 	}
 
 	order, err := h.service.GetByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, "error", http.StatusInternalServerError)
+		log.Println("get order error:", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
