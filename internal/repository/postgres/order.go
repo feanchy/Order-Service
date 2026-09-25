@@ -2,8 +2,10 @@ package postgres
 
 import (
 	"context"
+	"errors"
 
 	"github.com/feanchy/Order-Service/internal/model"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -29,6 +31,10 @@ func (r *OrderRepository) GetByID(ctx context.Context, id int) (*model.Order, er
 		&order.ID,
 		&order.Status,
 	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, model.ErrOrderNotFound
+	}
+
 	if err != nil {
 		return nil, err
 	}

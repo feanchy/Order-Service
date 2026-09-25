@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -35,9 +36,15 @@ func (h *OrderHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	order, err := h.service.GetByID(r.Context(), id)
+
+	if errors.Is(err, model.ErrOrderNotFound) {
+		writeError(w, http.StatusNotFound, model.ErrOrderNotFound.Error())
+		return
+	}
+
 	if err != nil {
 		log.Println("get order error:", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
@@ -48,4 +55,14 @@ func (h *OrderHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+}
+
+func writeError(w http.ResponseWriter, status int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+
+	w.WriteHeader(status)
+
+	_ = json.NewEncoder(w).Encode(map[string]string{
+		"error": message,
+	})
 }
