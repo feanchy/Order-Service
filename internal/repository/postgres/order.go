@@ -60,6 +60,37 @@ func (r *OrderRepository) CreateOrder(ctx context.Context) (*model.Order, error)
 	return &order, nil
 }
 
+func (r *OrderRepository) GetAll(ctx context.Context) ([]*model.Order, error) {
+	const query = `
+	SELECT id, status
+	FROM orders
+	ORDER BY id`
+
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var orders []*model.Order
+
+	for rows.Next() {
+		var order model.Order
+
+		if err := rows.Scan(&order.ID, &order.Status); err != nil {
+			return nil, err
+		}
+
+		orders = append(orders, &order)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
 func (r *OrderRepository) UpdateStatus(ctx context.Context, order model.Order) error {
 	const query = `
 	UPDATE orders

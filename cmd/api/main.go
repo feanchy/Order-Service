@@ -38,6 +38,7 @@ func main() {
 
 	mux.HandleFunc("GET /orders/{id}", orderHandler.GetByID)
 	mux.HandleFunc("POST /orders", orderHandler.CreateOrder)
+	mux.HandleFunc("GET	/orders", orderHandler.GetAll)
 
 	server := http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.HTTPPort),

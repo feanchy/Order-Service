@@ -14,6 +14,7 @@ import (
 type OrderService interface {
 	GetByID(ctx context.Context, id int) (*model.Order, error)
 	CreateOrder(ctx context.Context) (*model.Order, error)
+	GetAll(ctx context.Context) ([]*model.Order, error)
 }
 
 type OrderHandler struct {
@@ -73,6 +74,23 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+}
+
+func (h *OrderHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	orders, err := h.service.GetAll(r.Context())
+	if err != nil {
+		log.Println("get orders error:", err)
+		writeError(w, http.StatusInternalServerError, model.ErrInternalServer.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(orders); err != nil {
+		log.Println("encode orders error:", err)
+		return
+	}
 }
 
 func writeError(w http.ResponseWriter, status int, message string) {

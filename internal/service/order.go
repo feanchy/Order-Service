@@ -9,6 +9,7 @@ import (
 type OrderRepository interface {
 	GetByID(ctx context.Context, id int) (*model.Order, error)
 	CreateOrder(ctx context.Context) (*model.Order, error)
+	GetAll(ctx context.Context) ([]*model.Order, error)
 }
 
 type OrderService struct {
@@ -28,4 +29,8 @@ func (s *OrderService) GetByID(ctx context.Context, id int) (*model.Order, error
 
 func (s *OrderService) CreateOrder(ctx context.Context) (*model.Order, error) {
 	return s.repo.CreateOrder(ctx)
+}
+
+func (s *OrderService) GetAll(ctx context.Context) ([]*model.Order, error) {
+	return s.repo.GetAll(ctx)
 }
