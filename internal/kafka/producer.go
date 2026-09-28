@@ -2,7 +2,10 @@ package kafka
 
 import (
 	"context"
+	"encoding/json"
+	"strconv"
 
+	"github.com/feanchy/Order-Service/internal/event"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -25,5 +28,19 @@ func NewKafkaProducer(brokers []string, topic string) *KafkaProducer {
 }
 
 func (k *KafkaProducer) PublishOrderCreated(ctx context.Context, event event.OrderCreated) error {
+	data, err := json.Marshal(event)
 
+	if err != nil {
+		return err
+
+	}
+
+	return k.writer.WriteMessages(ctx, kafka.Message{
+		Key:   []byte(strconv.Itoa(event.OrderID)),
+		Value: data,
+	})
+}
+
+func (k *KafkaProducer) Close() error {
+	return k.writer.Close()
 }

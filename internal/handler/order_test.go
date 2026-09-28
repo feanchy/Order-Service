@@ -24,7 +24,7 @@ func (m *mockOrderService) CreateOrder(ctx context.Context) (*model.Order, error
 }
 
 func (m *mockOrderService) GetAll(ctx context.Context) ([]*model.Order, error) {
-	return []m.order, m.err
+	return []*model.Order{m.order}, m.err
 }
 
 func TestOrderHandler_GetByID(t *testing.T) {

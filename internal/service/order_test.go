@@ -5,12 +5,23 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/feanchy/Order-Service/internal/event"
 	"github.com/feanchy/Order-Service/internal/model"
 )
 
 type mockOrderRepository struct {
 	order *model.Order
 	err   error
+}
+
+type mockProducer struct {
+	err   error
+	event event.OrderCreated
+}
+
+func (m *mockProducer) PublishOrderCreated(ctx context.Context, e event.OrderCreated) error {
+	m.event = e
+	return m.err
 }
 
 func (m *mockOrderRepository) GetByID(ctx context.Context, id int) (*model.Order, error) {
@@ -22,7 +33,7 @@ func (m *mockOrderRepository) CreateOrder(ctx context.Context) (*model.Order, er
 }
 
 func (m *mockOrderRepository) GetAll(ctx context.Context) ([]*model.Order, error) {
-	return []m.order, m.err
+	return []*model.Order{m.order}, m.err
 }
 
 func TestOrderService_GetByID(t *testing.T) {
@@ -33,7 +44,9 @@ func TestOrderService_GetByID(t *testing.T) {
 		},
 	}
 
-	service := NewOrderService(mockRepo)
+	mockProducer := &mockProducer{}
+
+	service := NewOrderService(mockRepo, mockProducer)
 
 	order, err := service.GetByID(context.Background(), 1)
 
@@ -55,7 +68,9 @@ func TestOrderServie_GetByID_NotFound(t *testing.T) {
 		err: model.ErrOrderNotFound,
 	}
 
-	service := NewOrderService(mockRepo)
+	mockProducer := &mockProducer{}
+
+	service := NewOrderService(mockRepo, mockProducer)
 
 	_, err := service.GetByID(context.Background(), 99)
 	if !errors.Is(err, model.ErrOrderNotFound) {
@@ -71,7 +86,9 @@ func TestOrderService_CreateOrder(t *testing.T) {
 		},
 	}
 
-	service := NewOrderService(mockRepo)
+	mockProducer := &mockProducer{}
+
+	service := NewOrderService(mockRepo, mockProducer)
 
 	order, err := service.CreateOrder(context.Background())
 	if err != nil {
@@ -85,6 +102,12 @@ func TestOrderService_CreateOrder(t *testing.T) {
 	if order.Status != mockRepo.order.Status {
 		t.Errorf("expected %s, got %s", mockRepo.order.Status, order.Status)
 	}
+
+	if mockProducer.event.OrderID != order.ID {
+		t.Errorf("expected event OrderID %d, got %d",
+			order.ID,
+			mockProducer.event.OrderID)
+	}
 }
 
 func TestOrderService_CreateOrder_Error(t *testing.T) {
@@ -92,7 +115,9 @@ func TestOrderService_CreateOrder_Error(t *testing.T) {
 		err: errors.New("database error"),
 	}
 
-	service := NewOrderService(mockRepo)
+	mockProducer := &mockProducer{}
+
+	service := NewOrderService(mockRepo, mockProducer)
 
 	order, err := service.CreateOrder(context.Background())
 

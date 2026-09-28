@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 
+	"github.com/feanchy/Order-Service/internal/event"
+	"github.com/feanchy/Order-Service/internal/kafka"
 	"github.com/feanchy/Order-Service/internal/model"
 )
 
@@ -13,12 +15,17 @@ type OrderRepository interface {
 }
 
 type OrderService struct {
-	repo OrderRepository
+	repo     OrderRepository
+	producer kafka.Producer
 }
 
-func NewOrderService(repo OrderRepository) *OrderService {
+func NewOrderService(
+	repo OrderRepository,
+	producer kafka.Producer,
+) *OrderService {
 	return &OrderService{
-		repo: repo,
+		repo:     repo,
+		producer: producer,
 	}
 
 }
@@ -28,7 +35,20 @@ func (s *OrderService) GetByID(ctx context.Context, id int) (*model.Order, error
 }
 
 func (s *OrderService) CreateOrder(ctx context.Context) (*model.Order, error) {
-	return s.repo.CreateOrder(ctx)
+	order, err := s.repo.CreateOrder(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.producer.PublishOrderCreated(ctx, event.OrderCreated{
+		OrderID: order.ID,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return order, nil
 }
 
 func (s *OrderService) GetAll(ctx context.Context) ([]*model.Order, error) {
