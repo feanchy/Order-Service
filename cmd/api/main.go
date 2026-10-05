@@ -22,6 +22,9 @@ func main() {
 
 	cfg := config.Load()
 
+	fmt.Println("KAFKA_BROKER:", cfg.KafkaBroker)
+	fmt.Println("KAFKA_TOPIC:", cfg.KafkaTopic)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

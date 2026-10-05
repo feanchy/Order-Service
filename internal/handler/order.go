@@ -62,6 +62,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 
 	order, err := h.service.CreateOrder(r.Context())
 	if err != nil {
+		log.Println(err)
 		writeError(w, http.StatusInternalServerError, model.ErrInternalServer.Error())
 		return
 	}
@@ -70,6 +71,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 
 	if err := json.NewEncoder(w).Encode(order); err != nil {
+		log.Println(err)
 		http.Error(w, model.ErrInternalServer.Error(), http.StatusInternalServerError)
 		return
 	}

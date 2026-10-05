@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 
 	"github.com/feanchy/Order-Service/internal/event"
 	"github.com/feanchy/Order-Service/internal/kafka"
@@ -35,18 +36,25 @@ func (s *OrderService) GetByID(ctx context.Context, id int) (*model.Order, error
 }
 
 func (s *OrderService) CreateOrder(ctx context.Context) (*model.Order, error) {
+	log.Println("creating order")
+
 	order, err := s.repo.CreateOrder(ctx)
 	if err != nil {
+		log.Println("repo error:", err)
 		return nil, err
 	}
+
+	log.Println("order created:", order.ID)
 
 	err = s.producer.PublishOrderCreated(ctx, event.OrderCreated{
 		OrderID: order.ID,
 	})
-
 	if err != nil {
+		log.Println("kafka error:", err)
 		return nil, err
 	}
+
+	log.Println("kafka event published")
 
 	return order, nil
 }
