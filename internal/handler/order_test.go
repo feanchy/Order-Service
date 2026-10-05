@@ -15,7 +15,7 @@ type mockOrderService struct {
 	err   error
 }
 
-func (m *mockOrderService) GetByID(ctx context.Context, id int) (*model.Order, error) {
+func (m *mockOrderService) Get(ctx context.Context, id int) (*model.Order, error) {
 	return m.order, m.err
 }
 
@@ -23,11 +23,11 @@ func (m *mockOrderService) CreateOrder(ctx context.Context) (*model.Order, error
 	return m.order, m.err
 }
 
-func (m *mockOrderService) GetAll(ctx context.Context) ([]*model.Order, error) {
+func (m *mockOrderService) List(ctx context.Context) ([]*model.Order, error) {
 	return []*model.Order{m.order}, m.err
 }
 
-func TestOrderHandler_GetByID(t *testing.T) {
+func TestOrderHandler_Get(t *testing.T) {
 	mockService := &mockOrderService{
 		order: &model.Order{
 			ID:     1,
@@ -47,7 +47,7 @@ func TestOrderHandler_GetByID(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 
-	handler.GetByID(rec, req)
+	handler.Get(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
@@ -68,7 +68,7 @@ func TestOrderHandler_GetByID(t *testing.T) {
 	}
 }
 
-func TestOrderHandler_GetByID_NotFound(t *testing.T) {
+func TestOrderHandler_Get_NotFound(t *testing.T) {
 	mockService := &mockOrderService{
 		err: model.ErrOrderNotFound,
 	}
@@ -85,14 +85,14 @@ func TestOrderHandler_GetByID_NotFound(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 
-	handler.GetByID(rec, req)
+	handler.Get(rec, req)
 
 	if rec.Code != http.StatusNotFound {
 		t.Errorf("expected status %d, got %d", http.StatusNotFound, rec.Code)
 	}
 }
 
-func TestOrderHandler_GetByID_InvalidID(t *testing.T) {
+func TestOrderHandler_Get_InvalidID(t *testing.T) {
 	mockService := &mockOrderService{}
 
 	handler := NewOrderHandler(mockService)
@@ -106,7 +106,7 @@ func TestOrderHandler_GetByID_InvalidID(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 
-	handler.GetByID(rec, req)
+	handler.Get(rec, req)
 
 	if rec.Code != http.StatusBadRequest {
 		t.Errorf("expected status %d, got %d", http.StatusBadRequest, rec.Code)

@@ -7,126 +7,98 @@ import (
 
 	"github.com/feanchy/Order-Service/internal/event"
 	"github.com/feanchy/Order-Service/internal/model"
+	"go.uber.org/mock/gomock"
 )
 
-type mockOrderRepository struct {
-	order *model.Order
-	err   error
-}
+func TestOrderService_Get(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-type mockProducer struct {
-	err   error
-	event event.OrderCreated
-}
+	repo := NewMockOrderRepository(ctrl)
+	producer := NewMockOrderProducer(ctrl)
 
-func (m *mockProducer) PublishOrderCreated(ctx context.Context, e event.OrderCreated) error {
-	m.event = e
-	return m.err
-}
+	order := &model.Order{ID: 1, Status: "created"}
 
-func (m *mockOrderRepository) GetByID(ctx context.Context, id int) (*model.Order, error) {
-	return m.order, m.err
-}
+	repo.EXPECT().Get(gomock.Any(), 1).Return(order, nil)
 
-func (m *mockOrderRepository) CreateOrder(ctx context.Context) (*model.Order, error) {
-	return m.order, m.err
-}
+	service := NewOrderService(repo, producer)
 
-func (m *mockOrderRepository) GetAll(ctx context.Context) ([]*model.Order, error) {
-	return []*model.Order{m.order}, m.err
-}
-
-func TestOrderService_GetByID(t *testing.T) {
-	mockRepo := &mockOrderRepository{
-		order: &model.Order{
-			ID:     1,
-			Status: "created",
-		},
-	}
-
-	mockProducer := &mockProducer{}
-
-	service := NewOrderService(mockRepo, mockProducer)
-
-	order, err := service.GetByID(context.Background(), 1)
-
+	result, err := service.Get(context.Background(), 1)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if order.ID != 1 {
-		t.Errorf("expected ID 1, got %d", order.ID)
+	if result == nil {
+		t.Fatal("expected order, got nil")
 	}
 
-	if order.Status != "created" {
-		t.Errorf("expected status created, got %s", order.Status)
+	if result.ID != order.ID {
+		t.Fatalf("expected ID %d, got %d", order.ID, result.ID)
 	}
 }
 
-func TestOrderServie_GetByID_NotFound(t *testing.T) {
-	mockRepo := &mockOrderRepository{
-		err: model.ErrOrderNotFound,
-	}
+func TestOrderServie_Get_NotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	mockProducer := &mockProducer{}
+	repo := NewMockOrderRepository(ctrl)
+	producer := NewMockOrderProducer(ctrl)
 
-	service := NewOrderService(mockRepo, mockProducer)
+	repo.EXPECT().Get(gomock.Any(), 99).Return(nil, model.ErrOrderNotFound)
 
-	_, err := service.GetByID(context.Background(), 99)
+	service := NewOrderService(repo, producer)
+
+	_, err := service.Get(context.Background(), 99)
 	if !errors.Is(err, model.ErrOrderNotFound) {
-		t.Fatal()
+		t.Fatalf("expected ErrOrderNotFound, got %v", err)
 	}
 }
 
 func TestOrderService_CreateOrder(t *testing.T) {
-	mockRepo := &mockOrderRepository{
-		order: &model.Order{
-			ID:     1,
-			Status: "created",
-		},
-	}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	mockProducer := &mockProducer{}
+	repo := NewMockOrderRepository(ctrl)
+	producer := NewMockOrderProducer(ctrl)
 
-	service := NewOrderService(mockRepo, mockProducer)
+	order := &model.Order{ID: 1, Status: "created"}
 
-	order, err := service.CreateOrder(context.Background())
+	repo.EXPECT().CreateOrder(gomock.Any()).Return(order, nil)
+	producer.EXPECT().PublishOrderCreated(gomock.Any(), event.OrderCreated{OrderID: order.ID}).Return(nil)
+
+	service := NewOrderService(repo, producer)
+
+	created, err := service.CreateOrder(context.Background())
 	if err != nil {
-		t.Fatal()
+		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if order.ID != mockRepo.order.ID {
-		t.Errorf("expected %d, got %d", mockRepo.order.ID, order.ID)
+	if created.ID != order.ID {
+		t.Fatalf("expected ID %d, got %d", order.ID, created.ID)
 	}
 
-	if order.Status != mockRepo.order.Status {
-		t.Errorf("expected %s, got %s", mockRepo.order.Status, order.Status)
-	}
-
-	if mockProducer.event.OrderID != order.ID {
-		t.Errorf("expected event OrderID %d, got %d",
-			order.ID,
-			mockProducer.event.OrderID)
+	if created.Status != order.Status {
+		t.Fatalf("expected status %s, got %s", order.Status, created.Status)
 	}
 }
 
 func TestOrderService_CreateOrder_Error(t *testing.T) {
-	mockRepo := &mockOrderRepository{
-		err: errors.New("database error"),
-	}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	mockProducer := &mockProducer{}
+	repo := NewMockOrderRepository(ctrl)
+	producer := NewMockOrderProducer(ctrl)
 
-	service := NewOrderService(mockRepo, mockProducer)
+	repo.EXPECT().CreateOrder(gomock.Any()).Return(nil, errors.New("database error"))
 
-	order, err := service.CreateOrder(context.Background())
+	service := NewOrderService(repo, producer)
 
-	if order != nil {
-		t.Fatal("expected order to be nil")
+	created, err := service.CreateOrder(context.Background())
+	if created != nil {
+		t.Fatal("expected created order to be nil")
 	}
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-
 }

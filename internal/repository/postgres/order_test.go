@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func TestOrderRepository_GetByID(t *testing.T) {
+func TestOrderRepository_Get(t *testing.T) {
 	ctx := context.Background()
 
 	pool, err := pgxpool.New(ctx, "postgres://postgres:postgres@localhost:5432/orders?sslmode=disable")
@@ -36,7 +36,7 @@ RETURNING id
 
 	repo := NewOrderRepository(pool)
 
-	got, err := repo.GetByID(ctx, orderID)
+	got, err := repo.Get(ctx, orderID)
 	if err != nil {
 		t.Fatal(err)
 	}

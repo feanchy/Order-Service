@@ -19,7 +19,7 @@ func NewOrderRepository(db *pgxpool.Pool) *OrderRepository {
 	}
 }
 
-func (r *OrderRepository) GetByID(ctx context.Context, id int) (*model.Order, error) {
+func (r *OrderRepository) Get(ctx context.Context, id int) (*model.Order, error) {
 	const query = `
 	SELECT id, status 
 	FROM orders
@@ -60,7 +60,7 @@ func (r *OrderRepository) CreateOrder(ctx context.Context) (*model.Order, error)
 	return &order, nil
 }
 
-func (r *OrderRepository) GetAll(ctx context.Context) ([]*model.Order, error) {
+func (r *OrderRepository) List(ctx context.Context) ([]*model.Order, error) {
 	const query = `
 	SELECT id, status
 	FROM orders

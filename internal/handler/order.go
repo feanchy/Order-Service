@@ -12,9 +12,9 @@ import (
 )
 
 type OrderService interface {
-	GetByID(ctx context.Context, id int) (*model.Order, error)
+	Get(ctx context.Context, id int) (*model.Order, error)
 	CreateOrder(ctx context.Context) (*model.Order, error)
-	GetAll(ctx context.Context) ([]*model.Order, error)
+	List(ctx context.Context) ([]*model.Order, error)
 }
 
 type OrderHandler struct {
@@ -27,7 +27,7 @@ func NewOrderHandler(service OrderService) *OrderHandler {
 	}
 }
 
-func (h *OrderHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+func (h *OrderHandler) Get(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 
 	id, err := strconv.Atoi(idStr)
@@ -36,7 +36,7 @@ func (h *OrderHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	order, err := h.service.GetByID(r.Context(), id)
+	order, err := h.service.Get(r.Context(), id)
 
 	if errors.Is(err, model.ErrOrderNotFound) {
 		writeError(w, http.StatusNotFound, model.ErrOrderNotFound.Error())
@@ -78,10 +78,10 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *OrderHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	orders, err := h.service.GetAll(r.Context())
+func (h *OrderHandler) List(w http.ResponseWriter, r *http.Request) {
+	orders, err := h.service.List(r.Context())
 	if err != nil {
-		log.Println("get orders error:", err)
+		log.Println("list orders error:", err)
 		writeError(w, http.StatusInternalServerError, model.ErrInternalServer.Error())
 		return
 	}

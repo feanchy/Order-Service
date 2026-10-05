@@ -9,12 +9,6 @@ import (
 	"github.com/feanchy/Order-Service/internal/model"
 )
 
-type OrderRepository interface {
-	GetByID(ctx context.Context, id int) (*model.Order, error)
-	CreateOrder(ctx context.Context) (*model.Order, error)
-	GetAll(ctx context.Context) ([]*model.Order, error)
-}
-
 type OrderService struct {
 	repo     OrderRepository
 	producer kafka.Producer
@@ -31,8 +25,8 @@ func NewOrderService(
 
 }
 
-func (s *OrderService) GetByID(ctx context.Context, id int) (*model.Order, error) {
-	return s.repo.GetByID(ctx, id)
+func (s *OrderService) Get(ctx context.Context, id int) (*model.Order, error) {
+	return s.repo.Get(ctx, id)
 }
 
 func (s *OrderService) CreateOrder(ctx context.Context) (*model.Order, error) {
@@ -59,6 +53,6 @@ func (s *OrderService) CreateOrder(ctx context.Context) (*model.Order, error) {
 	return order, nil
 }
 
-func (s *OrderService) GetAll(ctx context.Context) ([]*model.Order, error) {
-	return s.repo.GetAll(ctx)
+func (s *OrderService) List(ctx context.Context) ([]*model.Order, error) {
+	return s.repo.List(ctx)
 }
