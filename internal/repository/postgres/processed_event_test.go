@@ -7,7 +7,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func TestOrderRepository_MarkProcessed(t *testing.T) {
+func TestOrderRepository_ProcessOrderCreated(t *testing.T) {
+
 	ctx := context.Background()
 
 	pool, err := pgxpool.New(
@@ -24,6 +25,18 @@ func TestOrderRepository_MarkProcessed(t *testing.T) {
 
 	eventID := "test-event-123"
 
+	defer func() {
+		_, err := pool.Exec(
+			ctx,
+			"DELETE FROM processed_events WHERE event_id = $1",
+			eventID,
+		)
+
+		if err != nil {
+			t.Errorf("cleanup processed event: %v", err)
+		}
+	}()
+
 	_, err = pool.Exec(
 		ctx,
 		"DELETE FROM processed_events WHERE event_id = $1",
@@ -33,7 +46,7 @@ func TestOrderRepository_MarkProcessed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got, err := repo.MarkProcessed(ctx, eventID)
+	got, err := repo.ProcessOrderCreated(ctx, eventID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +55,7 @@ func TestOrderRepository_MarkProcessed(t *testing.T) {
 		t.Fatal("expected first call to return true")
 	}
 
-	got, err = repo.MarkProcessed(ctx, eventID)
+	got, err = repo.ProcessOrderCreated(ctx, eventID)
 	if err != nil {
 		t.Fatal(err)
 	}
