@@ -5,18 +5,17 @@ import (
 	"log"
 
 	"github.com/feanchy/Order-Service/internal/event"
-	"github.com/feanchy/Order-Service/internal/kafka"
 	"github.com/feanchy/Order-Service/internal/model"
 )
 
 type OrderService struct {
 	repo     OrderRepository
-	producer kafka.Producer
+	producer OrderProducer
 }
 
 func NewOrderService(
 	repo OrderRepository,
-	producer kafka.Producer,
+	producer OrderProducer,
 ) *OrderService {
 	return &OrderService{
 		repo:     repo,
@@ -38,7 +37,7 @@ func (s *OrderService) CreateOrder(ctx context.Context) (*model.Order, error) {
 		return nil, err
 	}
 
-	log.Println("order created:", order.ID)
+	log.Println("Create Order: order created:", order.ID)
 
 	err = s.producer.PublishOrderCreated(ctx, event.OrderCreated{
 		OrderID: order.ID,
@@ -55,4 +54,14 @@ func (s *OrderService) CreateOrder(ctx context.Context) (*model.Order, error) {
 
 func (s *OrderService) List(ctx context.Context) ([]*model.Order, error) {
 	return s.repo.List(ctx)
+}
+
+func (s *OrderService) HandleOrderCreated(
+	ctx context.Context,
+	e event.OrderCreated,
+) error {
+
+	log.Println("Consumer: order created:", e.OrderID)
+
+	return nil
 }

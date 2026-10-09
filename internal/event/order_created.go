@@ -1,5 +1,6 @@
 package event
 
 type OrderCreated struct {
-	OrderID int `json:"order_id"`
+	EventID string `json:"event_id"`
+	OrderID int    `json:"order_id"`
 }

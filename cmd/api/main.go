@@ -46,6 +46,21 @@ func main() {
 	orderService := service.NewOrderService(repo, producer)
 	orderHandler := handler.NewOrderHandler(orderService)
 
+	consumer := kafka.NewConsumer(
+		cfg.KafkaTopic,
+		"order-service",
+		[]string{cfg.KafkaBroker},
+		orderService,
+	)
+
+	defer consumer.Close()
+
+	go func() {
+		if err := consumer.Run(context.Background()); err != nil {
+			log.Println("consumer error:", err)
+		}
+	}()
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /orders/{id}", orderHandler.Get)
