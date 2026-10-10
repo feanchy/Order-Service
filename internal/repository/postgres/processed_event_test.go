@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/feanchy/Order-Service/internal/model"
@@ -25,18 +26,6 @@ func TestOrderRepository_ProcessOrderCreated(t *testing.T) {
 
 	repo := NewOrderRepository(pool)
 
-	defer func() {
-		_, err := pool.Exec(
-			ctx,
-			"DELETE FROM processed_events WHERE event_id = $1",
-			eventID,
-		)
-
-		if err != nil {
-			t.Errorf("cleanup processed event: %v", err)
-		}
-	}()
-
 	var orderID int
 
 	err = pool.QueryRow(ctx, `
@@ -47,6 +36,24 @@ RETURNING id
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	defer func() {
+		_, err := pool.Exec(ctx,
+			"DELETE FROM processed_events WHERE event_id = $1",
+			eventID,
+		)
+		if err != nil {
+			t.Errorf("cleanup processed event: %v", err)
+		}
+
+		_, err = pool.Exec(ctx,
+			"DELETE FROM orders WHERE id = $1",
+			orderID,
+		)
+		if err != nil {
+			t.Errorf("cleanup order: %v", err)
+		}
+	}()
 
 	processed, err := repo.ProcessOrderCreated(ctx, eventID, orderID)
 	if err != nil {
@@ -96,7 +103,38 @@ func TestOrderRepository_NotFoundOrder(t *testing.T) {
 
 	repo := NewOrderRepository(pool)
 
-	orderID := 1
-	eventID := model.OrderStatusConfirmed
+	orderID := -1
+	eventID := "test-event-not-found"
+
+	_, err = repo.ProcessOrderCreated(ctx, eventID, orderID)
+	if !errors.Is(err, model.ErrOrderNotFound) {
+		t.Fatalf("expected ErrOrderNotFound, got %v", err)
+	}
+
+	defer func() {
+		_, err := pool.Exec(
+			ctx,
+			"DELETE FROM processed_events WHERE event_id = $1",
+			eventID,
+		)
+
+		if err != nil {
+			t.Errorf("cleanup processed event: %v", err)
+		}
+	}()
+
+	const query = `
+SELECT COUNT(*) FROM processed_events WHERE event_id = $1`
+
+	var countRows int
+
+	err = pool.QueryRow(ctx, query, eventID).Scan(&countRows)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if countRows != 0 {
+		t.Fatalf("expected 0, got %d", countRows)
+	}
 
 }
