@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 
+	"github.com/feanchy/Order-Service/internal/model"
 	"github.com/jackc/pgx/v5"
 )
 
-func (r *OrderRepository) ProcessOrderCreated(ctx context.Context, eventID string) (bool, error) {
+func (r *OrderRepository) ProcessOrderCreated(ctx context.Context, eventID string, orderID int) (bool, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return false, err
@@ -27,9 +28,25 @@ func (r *OrderRepository) ProcessOrderCreated(ctx context.Context, eventID strin
 	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil
 	}
+
 	if err != nil {
 		return false, err
 	}
+
+	const updateQuery = `
+	UPDATE orders 
+	SET status = $1
+	WHERE id = $2
+	`
+
+	tag, err := tx.Exec(ctx, updateQuery, model.OrderStatusConfirmed, orderID)
+	if err != nil {
+		return false, err
+	}
+	if tag.RowsAffected() == 0 {
+		return false, model.ErrOrderNotFound
+	}
+
 	if err := tx.Commit(ctx); err != nil {
 		return false, err
 	}
