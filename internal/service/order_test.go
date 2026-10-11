@@ -64,7 +64,15 @@ func TestOrderService_CreateOrder(t *testing.T) {
 	order := &model.Order{ID: 1, Status: "created"}
 
 	repo.EXPECT().CreateOrder(gomock.Any()).Return(order, nil)
-	producer.EXPECT().PublishOrderCreated(gomock.Any(), event.OrderCreated{OrderID: order.ID}).Return(nil)
+	producer.EXPECT().
+		PublishOrderCreated(
+			gomock.Any(),
+			gomock.Cond(func(x any) bool {
+				e, ok := x.(event.OrderCreated)
+				return ok && e.EventID != "" && e.OrderID == order.ID
+			}),
+		).
+		Return(nil)
 
 	service := NewOrderService(repo, producer)
 

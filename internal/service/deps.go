@@ -11,6 +11,7 @@ type OrderRepository interface {
 	Get(ctx context.Context, id int) (*model.Order, error)
 	CreateOrder(ctx context.Context) (*model.Order, error)
 	List(ctx context.Context) ([]*model.Order, error)
+	ProcessOrderCreated(ctx context.Context, eventID string, orderID int) (bool, error)
 }
 
 type OrderProducer interface {

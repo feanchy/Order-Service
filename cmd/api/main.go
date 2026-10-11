@@ -48,7 +48,7 @@ func main() {
 
 	consumer := kafka.NewConsumer(
 		cfg.KafkaTopic,
-		"order-service",
+		"order-service-debug",
 		[]string{cfg.KafkaBroker},
 		orderService,
 	)

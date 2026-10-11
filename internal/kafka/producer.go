@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"strconv"
 
 	"github.com/feanchy/Order-Service/internal/event"
@@ -28,7 +29,11 @@ func NewKafkaProducer(brokers []string, topic string) *KafkaProducer {
 }
 
 func (k *KafkaProducer) PublishOrderCreated(ctx context.Context, event event.OrderCreated) error {
+	log.Printf("publishing event: event_id=%q order_id=%d",
+		event.EventID, event.OrderID)
 	data, err := json.Marshal(event)
+
+	log.Printf("kafka payload: %s", data)
 
 	if err != nil {
 		return err

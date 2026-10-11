@@ -6,6 +6,7 @@ import (
 
 	"github.com/feanchy/Order-Service/internal/event"
 	"github.com/feanchy/Order-Service/internal/model"
+	"github.com/google/uuid"
 )
 
 type OrderService struct {
@@ -39,7 +40,11 @@ func (s *OrderService) CreateOrder(ctx context.Context) (*model.Order, error) {
 
 	log.Println("Create Order: order created:", order.ID)
 
+	eventID := uuid.NewString()
+
 	err = s.producer.PublishOrderCreated(ctx, event.OrderCreated{
+
+		EventID: eventID,
 		OrderID: order.ID,
 	})
 	if err != nil {
@@ -61,7 +66,14 @@ func (s *OrderService) HandleOrderCreated(
 	e event.OrderCreated,
 ) error {
 
-	log.Println("Consumer: order created:", e.OrderID)
+	processed, err := s.repo.ProcessOrderCreated(ctx, e.EventID, e.OrderID)
+	if err != nil {
+		return err
+	}
+
+	if !processed {
+		return nil
+	}
 
 	return nil
 }

@@ -87,6 +87,21 @@ func (mr *MockOrderRepositoryMockRecorder) List(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockOrderRepository)(nil).List), ctx)
 }
 
+// ProcessOrderCreated mocks base method.
+func (m *MockOrderRepository) ProcessOrderCreated(ctx context.Context, eventID string, orderID int) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProcessOrderCreated", ctx, eventID, orderID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProcessOrderCreated indicates an expected call of ProcessOrderCreated.
+func (mr *MockOrderRepositoryMockRecorder) ProcessOrderCreated(ctx, eventID, orderID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessOrderCreated", reflect.TypeOf((*MockOrderRepository)(nil).ProcessOrderCreated), ctx, eventID, orderID)
+}
+
 // MockOrderProducer is a mock of OrderProducer interface.
 type MockOrderProducer struct {
 	ctrl     *gomock.Controller
